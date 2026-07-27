@@ -1109,6 +1109,26 @@ export function stripContentEditable(html: string): string {
 }
 
 /**
+ * Give each generated section a programmatic name when the renderer did not
+ * provide one. A sectioning element without a heading is reported by the Nu
+ * HTML Checker and is difficult for screen-reader users to identify.
+ *
+ * Rendered page content is constrained to a single outer section, so this
+ * deliberately targets that element rather than trying to rewrite arbitrary
+ * nested HTML supplied by an activity.
+ */
+function addFallbackSectionHeading(html: string, heading: string): string {
+  if (!heading.trim() || !/^\s*<section\b/i.test(html) || /<h[1-6]\b/i.test(html)) {
+    return html
+  }
+
+  return html.replace(
+    /^(\s*<section\b[^>]*>)/i,
+    `$1\n  <h2 class="sr-only">${escapeHtml(heading.trim())}</h2>`,
+  )
+}
+
+/**
  * Resolve the reflowable base-font CSS chain for a book, or undefined when no
  * override is needed (fixed-layout books keep original fonts; the serif default
  * Merriweather is already the global font). Reads the book-level `font-profile`
@@ -1139,7 +1159,10 @@ export function renderPageHtml(opts: RenderPageOptions): string {
       ? `\n    <script type="text/javascript">\n        window.correctAnswers = JSON.parse('${escapeInlineScriptJson(JSON.stringify(opts.activityAnswers))}');\n    </script>`
       : ""
 
-  const normalizedContent = stripContentEditable(promoteFirstHeadingToH1(opts.content))
+  const normalizedContent = addFallbackSectionHeading(
+    stripContentEditable(promoteFirstHeadingToH1(opts.content)),
+    opts.pageHeading ?? opts.pageTitle,
+  )
 
   // INVARIANT: every page MUST render all TTS-scannable content inside
   // <div id="content">. The reader's gatherAudioElements scans #content for
@@ -1233,11 +1256,11 @@ ${fallbackHeadingHtml}${contentBlock}
 <html lang="${escapeAttr(opts.language)}">
 
 <head>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="${opts.fixedViewport ? `width=${opts.fixedViewport.width}, height=${opts.fixedViewport.height}` : "width=device-width, initial-scale=1"}" />
+    <meta charset="utf-8">
+    <meta name="viewport" content="${opts.fixedViewport ? `width=${opts.fixedViewport.width}, height=${opts.fixedViewport.height}` : "width=device-width, initial-scale=1"}">
     <title>${escapeHtml(opts.pageTitle)}</title>
-    <meta name="title-id" content="${escapeAttr(opts.sectionId)}" />
-    <meta name="page-section-id" content="${opts.pageIndex}" />
+    <meta name="title-id" content="${escapeAttr(opts.sectionId)}">
+    <meta name="page-section-id" content="${opts.pageIndex}">
     <link href="./content/tailwind_output.css" rel="stylesheet">
     <link href="./assets/libs/fontawesome/css/all.min.css" rel="stylesheet">
     <link href="./assets/fonts.css" rel="stylesheet">${googleFontsLinks}

@@ -100,6 +100,36 @@ function createMinimalStorage(): Storage {
 }
 
 describe("renderPageHtml", () => {
+  it("uses HTML void elements and names a generated section that lacks a heading", () => {
+    const html = renderPageHtml({
+      content: '<section data-section-id="pg001_sec001"><p>Hello</p></section>',
+      language: "en",
+      sectionId: "pg001_sec001",
+      pageTitle: "Page one",
+      pageIndex: 1,
+      hasMath: false,
+      bundleVersion: "1",
+    })
+
+    expect(html).toContain('<meta charset="utf-8">')
+    expect(html).not.toContain('<meta charset="utf-8" />')
+    expect(html).toContain('<h2 class="sr-only">Page one</h2>')
+  })
+
+  it("does not add a fallback section heading when the content has one", () => {
+    const html = renderPageHtml({
+      content: '<section><h2>Existing heading</h2><p>Hello</p></section>',
+      language: "en",
+      sectionId: "pg001_sec001",
+      pageTitle: "Page one",
+      pageIndex: 1,
+      hasMath: false,
+      bundleVersion: "1",
+    })
+
+    expect(html).not.toContain('<h2 class="sr-only">Page one</h2>')
+  })
+
   it("does not emit font preload links (fonts are declared in fonts.css)", () => {
     const html = renderPageHtml({
       content: "<p>Hello</p>",
