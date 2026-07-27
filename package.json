@@ -17,6 +17,7 @@
     "dev:api": "pnpm --filter @adt/api dev",
     "dev:studio": "pnpm --filter @adt/studio dev",
     "dev:desktop": "pnpm --parallel --filter @adt/desktop --filter @adt/studio dev --mode desktop",
+    "playwright:install": "pnpm --filter @adt/pipeline exec playwright install chromium",
     "build:desktop": "pnpm build && pnpm --filter @adt/desktop build",
     "pdf-extract": "tsx packages/pdf/src/cli.ts",
     "pipeline": "tsx packages/pipeline/src/cli.ts",
